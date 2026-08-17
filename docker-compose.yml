@@ -1,0 +1,15 @@
+services:
+  jarvis:
+    build: .
+    container_name: jarvis
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./config/devices.yaml:/app/config/devices.yaml:ro
+    environment:
+      DEVICES_CONFIG: /app/config/devices.yaml
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

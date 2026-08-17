@@ -1,0 +1,21 @@
+devices:
+  - id: paczek
+    name: "Pączek"
+    type: shelly_plug
+    host: 192.168.1.87
+    aliases:
+      - pączek
+      - pączka
+      - pączku
+      - pączkiem
+      - lampka
+      - światło
+
+  - id: bedroom-socket
+    name: "Gniazdko w sypialni"
+    type: shelly_plug
+    host: 192.168.1.88
+    room: sypialnia
+    aliases:
+      - gniazdko
+      - ładowarka
