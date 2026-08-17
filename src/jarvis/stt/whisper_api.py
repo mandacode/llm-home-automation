@@ -11,7 +11,7 @@ class WhisperApiTranscriber:
         api_key: str,
         model: str,
         base_url: str | None = None,
-        language: str = "pl",
+        language: str | None = None,
         vocabulary_hint: str | None = None,
     ) -> None:
         self._client = AsyncOpenAI(api_key=api_key, base_url=base_url)
@@ -20,12 +20,16 @@ class WhisperApiTranscriber:
         self._vocabulary_hint = vocabulary_hint
 
     async def transcribe(self, audio: bytes, filename: str = "voice.ogg") -> str:
-        extra = {"prompt": self._vocabulary_hint} if self._vocabulary_hint else {}
+        extra: dict[str, str] = {}
+        if self._vocabulary_hint:
+            extra["prompt"] = self._vocabulary_hint
+        if self._language:
+            extra["language"] = self._language
+
         try:
             result = await self._client.audio.transcriptions.create(
                 model=self._model,
                 file=(filename, audio),
-                language=self._language,
                 temperature=0,
                 **extra,
             )

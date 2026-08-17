@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from ..devices.registry import DeviceRegistry
 
-_TEMPLATE = """Zamieniasz polskie polecenia głosowe na akcje w inteligentnym domu.
+_TEMPLATE = """Zamieniasz polecenia głosowe na akcje w inteligentnym domu.
+Wypowiedź może być po polsku LUB po angielsku — obsługuj oba języki tak samo
+(„włącz pączka" i „turn on the donut" to to samo polecenie).
 
 Dostępne urządzenia:
 {devices}

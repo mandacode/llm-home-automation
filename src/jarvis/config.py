@@ -35,7 +35,7 @@ class Config:
     stt_model: str
     stt_api_key: str
     stt_base_url: str | None
-    stt_language: str
+    stt_language: str | None
 
     devices_config: str
     device_timeout_s: float
@@ -108,7 +108,7 @@ def load_config() -> Config:
         stt_model=os.getenv("STT_MODEL", "whisper-large-v3-turbo"),
         stt_api_key=stt_api_key,
         stt_base_url=BASE_URLS.get(stt_provider),
-        stt_language=os.getenv("STT_LANGUAGE", "pl"),
+        stt_language=os.getenv("STT_LANGUAGE", "").strip() or None,
         devices_config=str(_resolve_path(os.getenv("DEVICES_CONFIG", "config/devices.yaml"))),
         device_timeout_s=float(os.getenv("DEVICE_TIMEOUT_S", "4.0")),
     )

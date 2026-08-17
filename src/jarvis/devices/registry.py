@@ -89,7 +89,7 @@ class DeviceRegistry:
             terms.append(device.name)
             terms.extend(device.aliases)
         unique = list(dict.fromkeys(terms))
-        return "Polecenia do inteligentnego domu. Urządzenia: " + ", ".join(unique) + "."
+        return ", ".join(unique) + "."
 
     def __len__(self) -> int:
         return len(self._by_id)

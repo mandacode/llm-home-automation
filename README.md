@@ -214,13 +214,13 @@ devices:
     type: shelly_plug       # hardware type = which adapter handles it
     host: 192.168.1.87      # IP address on your LAN
     room: salon             # optional, helps disambiguate similar names
-    aliases:                # how you actually refer to it out loud
+    aliases:                # how you actually refer to it out loud, in any language you use
       - pączek
       - pączka
       - pączku
       - pączkiem
-      - lampka
-      - światło
+      - donut
+      - light
     misheard:               # what speech-to-text produces when it gets it wrong
       - ponczek
       - bądźka
@@ -460,8 +460,11 @@ presented as such. But there's no evidence English is better, and there is a pla
 for Polish winning: the prompt already contains Polish device names and aliases, so keeping the
 instructions in the same language keeps the context coherent.
 
-**If you adapt this to another language:** translate the prompt to match your device names and
-set `STT_LANGUAGE` accordingly.
+**Multilingual input.** `STT_LANGUAGE` is empty by default, so Whisper auto-detects the spoken
+language and the system prompt accepts Polish or English interchangeably — *"włącz pączka"* and
+*"turn on the donut"* trigger the same action. Give each device aliases in both languages. Pin
+`STT_LANGUAGE=pl` (or any ISO code) only if you speak a single language and want to skip
+detection.
 
 ### Why the prompt is deliberately short
 
