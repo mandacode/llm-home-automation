@@ -35,6 +35,7 @@ def build_bot() -> TelegramBot:
         model=config.stt_model,
         base_url=config.stt_base_url,
         language=config.stt_language,
+        vocabulary_hint=registry.vocabulary_hint(),
     )
 
     parser = OpenAICompatParser(

@@ -24,6 +24,7 @@ class Device:
     host: str
     room: str | None = None
     aliases: tuple[str, ...] = ()
+    misheard: tuple[str, ...] = ()
 
     def describe_for_prompt(self) -> str:
         parts = [f"{self.id}: {self.name}"]
@@ -31,6 +32,8 @@ class Device:
             parts.append(f"pokój={self.room}")
         if self.aliases:
             parts.append("mówi się też: " + ", ".join(self.aliases))
+        if self.misheard:
+            parts.append("częste przekręcenia w transkrypcji: " + ", ".join(self.misheard))
         return " | ".join(parts)
 
 

@@ -221,6 +221,10 @@ devices:
       - pączkiem
       - lampka
       - światło
+    misheard:               # what speech-to-text produces when it gets it wrong
+      - ponczek
+      - bądźka
+      - wątponczka
 ```
 
 **Aliases are the most important field.** The model has no way to know your device names —
@@ -232,6 +236,32 @@ explicit list is more reliable and costs nothing.
 
 Aliases **do not widen** the set of controllable devices — they improve recognition accuracy,
 they don't loosen the safety guarantees.
+
+### The `misheard` field
+
+Unusual proper nouns are the weak point of speech-to-text, not of the language model. Real
+transcripts of someone saying *"włącz pączka"* came back as:
+
+```
+"Wątponczka."        "Włącz, bądźka."        "Ponczek."
+```
+
+The model then correctly reported an unknown device — the text genuinely contained nothing
+resembling one. Two independent fixes address this:
+
+1. **A vocabulary hint for Whisper.** The registry's device names and aliases are passed as the
+   transcription `prompt`, biasing recognition towards your actual vocabulary.
+2. **The `misheard` list.** Whatever mangled forms you observe in practice go here, and the
+   language model learns to map them back to the device.
+
+**These two lists must stay separate, and that separation is the whole point.** `aliases` feed
+the Whisper hint; `misheard` never does. Telling Whisper that "bądźka" is valid vocabulary would
+teach it the very error you're trying to correct. `misheard` is therefore consumed only by the
+language model, downstream of transcription.
+
+Adding fuzzy variants doesn't weaken the safety guarantees — *"zjadłbym pączka z lukrem"*
+("I could go for a doughnut with icing") still returns "not a command", because matching happens
+on intent, not on substrings.
 
 After editing, restart the app (`docker compose restart`, or rerun the process).
 `devices.yaml` is mounted read-only into the container, so **the image never needs rebuilding**.

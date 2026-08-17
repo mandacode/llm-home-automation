@@ -55,6 +55,10 @@ class DeviceRegistry:
         if not isinstance(aliases, list):
             raise DeviceRegistryError(f"{path}: 'aliases' in entry #{index} must be a list.")
 
+        misheard = entry.get("misheard") or []
+        if not isinstance(misheard, list):
+            raise DeviceRegistryError(f"{path}: 'misheard' in entry #{index} must be a list.")
+
         return Device(
             id=str(entry["id"]),
             name=str(entry["name"]),
@@ -62,6 +66,7 @@ class DeviceRegistry:
             host=str(entry["host"]),
             room=str(entry["room"]) if entry.get("room") else None,
             aliases=tuple(str(alias) for alias in aliases),
+            misheard=tuple(str(term) for term in misheard),
         )
 
     def ids(self) -> list[str]:
@@ -77,6 +82,14 @@ class DeviceRegistry:
 
     def describe_for_prompt(self) -> str:
         return "\n".join(f"- {device.describe_for_prompt()}" for device in self.all())
+
+    def vocabulary_hint(self) -> str:
+        terms: list[str] = []
+        for device in self.all():
+            terms.append(device.name)
+            terms.extend(device.aliases)
+        unique = list(dict.fromkeys(terms))
+        return "Polecenia do inteligentnego domu. Urządzenia: " + ", ".join(unique) + "."
 
     def __len__(self) -> int:
         return len(self._by_id)
