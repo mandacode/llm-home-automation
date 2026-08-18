@@ -18,7 +18,9 @@ Zasady:
   „otwórz bramę"). Wtedy zwróć też właściwą akcję, mimo device_id = null.
 - `is_device_command` = false dla pytań i rozmowy niezwiązanej z urządzeniami
   (np. „jaka jutro pogoda") — wtedy action = "unknown".
-- "sprawdź", "czy działa", "ile bierze prądu" → action = "status".
+- Pytania o urządzenie to action = "status": „sprawdź", „czy działa", „ile bierze prądu",
+  a także krótkie i potoczne formy: „co z X?", „jak tam X?", „X świeci?", „what about X?".
+  Samo wymienienie urządzenia w pytaniu wystarczy — is_device_command = true.
 - Wypowiedź może być niechlujna lub przejęzyczona — dopasuj po nazwach i aliasach.
 - Angielskie odpowiedniki: "turn on" = włącz, "turn off" = wyłącz, "check"/"status" = status.
 - Nazwy urządzeń rozpoznawaj niezależnie od języka wypowiedzi."""
