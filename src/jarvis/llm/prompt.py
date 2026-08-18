@@ -19,7 +19,9 @@ Zasady:
 - `is_device_command` = false dla pytań i rozmowy niezwiązanej z urządzeniami
   (np. „jaka jutro pogoda") — wtedy action = "unknown".
 - "sprawdź", "czy działa", "ile bierze prądu" → action = "status".
-- Wypowiedź może być niechlujna lub przejęzyczona — dopasuj po nazwach i aliasach."""
+- Wypowiedź może być niechlujna lub przejęzyczona — dopasuj po nazwach i aliasach.
+- Angielskie odpowiedniki: "turn on" = włącz, "turn off" = wyłącz, "check"/"status" = status.
+- Nazwy urządzeń rozpoznawaj niezależnie od języka wypowiedzi."""
 
 
 def build_system_prompt(registry: DeviceRegistry) -> str:
