@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from enum import Enum
 
 
@@ -16,7 +17,7 @@ class Action(str, Enum):
         return self is not Action.UNKNOWN
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Device:
     id: str
     name: str
@@ -25,6 +26,7 @@ class Device:
     room: str | None = None
     aliases: tuple[str, ...] = ()
     misheard: tuple[str, ...] = ()
+    options: Mapping[str, str] = field(default_factory=dict)
 
     def describe_for_prompt(self) -> str:
         parts = [f"{self.id}: {self.name}"]

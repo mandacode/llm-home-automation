@@ -7,6 +7,7 @@ from .bot.telegram import TelegramBot
 from .config import ConfigError, load_config
 from .core.pipeline import Pipeline
 from .devices.registry import DeviceRegistry, DeviceRegistryError
+from .devices.ps5 import PS5Adapter
 from .devices.shelly import ShellyGen3Adapter
 from .llm.openai_compat import OpenAICompatParser
 from .stt.whisper_api import WhisperApiTranscriber
@@ -50,6 +51,7 @@ def build_bot() -> TelegramBot:
 
     adapters = {
         ShellyGen3Adapter.device_type: ShellyGen3Adapter(timeout_s=config.device_timeout_s),
+        PS5Adapter.device_type: PS5Adapter(profile_path=config.ps5_profile_path),
     }
 
     pipeline = Pipeline(

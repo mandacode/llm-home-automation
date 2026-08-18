@@ -39,6 +39,7 @@ class Config:
 
     devices_config: str
     device_timeout_s: float
+    ps5_profile_path: str
 
     @property
     def uses_structured_output(self) -> bool:
@@ -111,4 +112,5 @@ def load_config() -> Config:
         stt_language=os.getenv("STT_LANGUAGE", "").strip() or None,
         devices_config=str(_resolve_path(os.getenv("DEVICES_CONFIG", "config/devices.yaml"))),
         device_timeout_s=float(os.getenv("DEVICE_TIMEOUT_S", "4.0")),
+        ps5_profile_path=os.getenv("PS5_PROFILE_PATH", "~/.pyremoteplay/.profile.json"),
     )

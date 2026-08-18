@@ -6,8 +6,10 @@ services:
     env_file: .env
     volumes:
       - ./config/devices.yaml:/app/config/devices.yaml:ro
+      - ${PS5_PROFILE_HOST_PATH:-./config/.ps5-profile.json}:/app/secrets/ps5-profile.json:ro
     environment:
       DEVICES_CONFIG: /app/config/devices.yaml
+      PS5_PROFILE_PATH: /app/secrets/ps5-profile.json
     logging:
       driver: json-file
       options:

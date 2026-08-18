@@ -59,6 +59,10 @@ class DeviceRegistry:
         if not isinstance(misheard, list):
             raise DeviceRegistryError(f"{path}: 'misheard' in entry #{index} must be a list.")
 
+        options = entry.get("options") or {}
+        if not isinstance(options, dict):
+            raise DeviceRegistryError(f"{path}: 'options' in entry #{index} must be a mapping.")
+
         return Device(
             id=str(entry["id"]),
             name=str(entry["name"]),
@@ -67,6 +71,7 @@ class DeviceRegistry:
             room=str(entry["room"]) if entry.get("room") else None,
             aliases=tuple(str(alias) for alias in aliases),
             misheard=tuple(str(term) for term in misheard),
+            options={str(k): str(v) for k, v in options.items()},
         )
 
     def ids(self) -> list[str]:
