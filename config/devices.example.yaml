@@ -8,16 +8,26 @@ devices:
       - pączka
       - pączku
       - pączkiem
+      - donut
       - lampka
       - światło
-
-  - id: bedroom-socket
-    name: "Gniazdko w sypialni"
-    type: shelly_plug
-    host: 192.168.1.88
-    room: sypialnia
-    aliases:
-      - gniazdko
-      - ładowarka
     misheard:
-      - gniazdko przy łóżku
+      - ponczek
+      - bądźka
+      - wątponczka
+
+  - id: ps5
+    name: "PlayStation"
+    type: ps5
+    host: 192.168.1.36
+    options:
+      host_id: 68286C32BF27
+    aliases:
+      - playstation
+      - plejstejszyn
+      - ps5
+      - konsola
+      - console
+    misheard:
+      - plej stejszyn
+      - plajstejszyn

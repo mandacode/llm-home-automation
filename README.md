@@ -1,6 +1,6 @@
 # Jarvis
 
-**Voice-controlled smart home over Telegram — in Polish, using your own names for devices.**
+**Voice-controlled smart home over Telegram — in Polish or English, using your own names for devices.**
 
 Record a voice message on Telegram. Jarvis transcribes it, a language model works out what you
 meant, and the right device switches on or off. If the device doesn't exist, it says so plainly
@@ -8,6 +8,8 @@ instead of guessing.
 
 ```
 "włącz pączka"              →  ✅ Pączek — włączone
+"turn on the donut"         →  ✅ Pączek — włączone
+"włącz plejstejszyn"        →  ✅ PlayStation — włączone
 "a co tam u pączka?"        →  ℹ️ Pączek — włączone, pobór 8.4 W
 "włącz lampę w garażu"      →  ❌ Nie znam takiego urządzenia
 "jaka jutro pogoda?"        →  ❓ Nie zrozumiałem polecenia
@@ -17,9 +19,8 @@ instead of guessing.
 **you talk to your home the way you normally talk** — your own names, any grammatical case,
 sloppy phrasing included. You don't learn commands; the system learns you.
 
-The examples stay Polish because the speech pipeline is tuned for Polish. Swapping to another
-language means changing `STT_LANGUAGE` and the system prompt — see
-[Design decisions](#why-the-system-prompt-is-in-polish).
+Commands work in Polish and English. Speech language is auto-detected; the device names stay
+whatever you called them.
 
 ---
 
@@ -32,22 +33,26 @@ language means changing `STT_LANGUAGE` and the system prompt — see
   - [1. Create the Telegram bot](#1-create-the-telegram-bot)
   - [2. Get a Groq API key](#2-get-a-groq-api-key)
   - [3. Set up a Shelly plug](#3-set-up-a-shelly-plug)
-  - [4. Install and run](#4-install-and-run)
+  - [4. Set up a PlayStation 5](#4-set-up-a-playstation-5)
+  - [5. Install and run](#5-install-and-run)
 - [Adding devices](#adding-devices)
 - [Supporting other hardware](#supporting-other-hardware)
 - [Why it doesn't hallucinate](#why-it-doesnt-hallucinate)
 - [Architecture](#architecture)
 - [Deployment](#deployment)
 - [Design decisions](#design-decisions)
+  - [PS5 library workarounds](#working-around-an-unmaintained-ps5-library)
 
 ---
 
 ## Features
 
 - 🎤 **Voice messages** — you speak, you don't type
+- 🌍 **Polish and English** — same command set, language auto-detected
 - 🏷️ **Your own device names** — "Pączek", "the one behind the TV", plus grammatical inflection
 - 🔀 **Understands intent, not keywords** — "it got dark, turn something on" works
 - 🔌 **On / off / toggle / status** — including live power draw in watts
+- 🎮 **PlayStation 5** — wake from rest mode, put to rest, read what's running
 - 🛑 **Never invents devices** — two independent barriers, see [below](#why-it-doesnt-hallucinate)
 - 🔒 **User allowlist** — fail-closed, strangers can't touch your lights
 - ⚡ **~1.5 s** from end of recording to the relay clicking
@@ -80,6 +85,7 @@ flowchart TD
 | Understanding | **Groq — `openai/gpt-oss-120b`** | speech → JSON via structured outputs |
 | API client | **openai SDK** | one interface for Groq, OpenAI and Ollama |
 | Devices | **httpx** + Shelly Gen3 RPC | local HTTP, no cloud |
+| Console | **pyremoteplay** + raw DDP sockets | PS5 wake / rest / status |
 | Registry | **PyYAML** | all devices in one file |
 | Deployment | **Docker Compose** | single container, restart policy |
 
@@ -87,8 +93,8 @@ Hardware requirements are negligible — the heavy lifting happens in the APIs, 
 thin coordinator. Tens of MB of RAM, near-zero CPU. It runs happily on decade-old hardware or
 a Raspberry Pi.
 
-**Supported hardware:** Shelly Gen3 (Plug S and relatives). Adding another vendor is one new
-file — see [Supporting other hardware](#supporting-other-hardware).
+**Supported hardware:** Shelly Gen3 (Plug S and relatives) and PlayStation 5. Adding another
+vendor is one new file — see [Supporting other hardware](#supporting-other-hardware).
 
 ---
 
@@ -180,7 +186,80 @@ Useful endpoints for testing by hand:
 > If you enable a password in the plug's settings, `devices/shelly.py` needs to send digest
 > auth. On a trusted home LAN, leaving auth off is the normal setup.
 
-### 4. Install and run
+### 4. Set up a PlayStation 5
+
+The PS5 can be woken and put to rest over the LAN, and it reports its own status. Sony has no
+public API for this — Jarvis speaks the Remote Play discovery protocol, which needs a one-time
+pairing with your PSN account.
+
+**On the console** — `Settings → System → Power Saving → Features Available in Rest Mode`:
+
+- ✅ **Stay Connected to the Internet**
+- ✅ **Enable Turning on PS5 from Network**
+
+Then `Settings → System → Remote Play` → **Enable Remote Play**.
+
+Optionally `Settings → System → HDMI` → **Enable HDMI Device Link**. With HDMI-CEC the console
+turns your TV on and switches its input when it wakes — handy if the TV itself has no network.
+
+**Reserve the console's IP** in your router, exactly as for the Shelly.
+
+**Pair with your account.** The console must be **switched on** during pairing:
+
+```bash
+pip install pyremoteplay "pyee<12" async_timeout
+pyremoteplay -r 192.168.1.36
+```
+
+The wizard walks you through three steps:
+
+1. It prints a PSN login URL — open it in a browser and sign in
+2. You land on a page that looks blank or broken; that is expected. Copy the whole address bar
+   (`https://remoteplay.dl.playstation.net/remoteplay/redirect?code=...`) back into the terminal
+3. On the console, `Settings → System → Remote Play → Link Device` shows an **8-digit PIN**.
+   Type it in
+
+> That redirect URL contains an authorisation code for your PSN account. Paste it into your own
+> terminal only — never into a chat, an issue, or a commit.
+
+Pairing writes `~/.pyremoteplay/.profile.json`. Copy it next to your config and point the
+registry at it:
+
+```bash
+cp ~/.pyremoteplay/.profile.json config/.ps5-profile.json
+chmod 600 config/.ps5-profile.json
+```
+
+Then add the console to `config/devices.yaml`, using `options.host_id` to pick the right entry
+from the profile (it is the `host-id` the console reports, also the key in the profile file):
+
+```yaml
+  - id: ps5
+    name: "PlayStation"
+    type: ps5
+    host: 192.168.1.36
+    options:
+      host_id: 68286C32BF27
+    aliases:
+      - playstation
+      - plejstejszyn      # how a Pole says it out loud
+      - ps5
+      - konsola
+```
+
+Check it by hand at any time — this needs no credentials:
+
+```bash
+printf 'SRCH * HTTP/1.1\ndevice-discovery-protocol-version:00030010\n' \
+  | nc -u -w2 192.168.1.36 9302
+```
+
+`HTTP/1.1 200 Ok` means on, `620 Server Standby` means resting.
+
+> **"Turn on" means "wake from rest mode".** A console shut down completely cannot be woken by
+> anything on the network. Use *Enter Rest Mode*, not *Turn Off PS5*.
+
+### 5. Install and run
 
 ```bash
 git clone https://github.com/mandacode/llm-home-automation.git
@@ -236,6 +315,14 @@ explicit list is more reliable and costs nothing.
 
 Aliases **do not widen** the set of controllable devices — they improve recognition accuracy,
 they don't loosen the safety guarantees.
+
+Adapters that need extra settings read them from an optional `options` mapping, kept out of
+the shared schema so one vendor's quirks never leak into another's:
+
+```yaml
+    options:
+      host_id: 68286C32BF27    # PS5: which entry in the pairing profile to use
+```
 
 ### The `misheard` field
 
@@ -388,6 +475,42 @@ and the layout of your home.
 second bot in BotFather and use a separate token.
 
 ## Design decisions
+
+### Working around an unmaintained PS5 library
+
+`pyremoteplay` is the only practical way to wake and rest a PS5 from Python, and it is barely
+maintained. Three defects were found and worked around; all three are worth knowing before
+touching `devices/ps5.py`.
+
+**1. It doesn't install on current versions.** It calls `pyee.ExecutorEventEmitter`, removed in
+pyee 12, and pulls a transitive dependency it never declares. Hence the pins:
+
+```
+pyremoteplay>=0.7.6
+pyee<12
+async_timeout>=4.0
+```
+
+It also compiles `netifaces` from source, so the Docker build needs a compiler. That's why the
+image is built in two stages — `gcc` lives in the builder and never reaches the runtime image.
+
+**2. `wakeup(user=...)` silently does nothing.** A console in rest mode omits `host-id` from its
+discovery response, so the library can't match it to a stored profile, logs `Profile not found`
+and returns without sending a packet. The fix is to pass the registration key instead, which
+takes precedence over the profile lookup:
+
+```python
+rp.wakeup(key=regist_key)   # works; wakeup(user=...) does not
+```
+
+**3. `standby()` reports failure when it succeeds.** The session handshake fails against current
+console firmware (`Version not accepted`) and the call returns `False` — but the command reaches
+the console and it does go to sleep. **Never trust the return value.** The adapter polls the
+discovery protocol until the console actually reports `620 Server Standby`.
+
+The lesson generalises: when a library and the hardware disagree, believe the hardware. Status is
+therefore read over a raw UDP socket with no library involved at all — which is also why
+`status` keeps working even if `pyremoteplay` breaks again.
 
 ### Why hosted APIs instead of a local model
 
